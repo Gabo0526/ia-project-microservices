@@ -88,3 +88,12 @@ Ejecuta los siguientes comandos uno detrás de otro:
    ```
 
 También puedes realizar la instalación siguiendo los pasos del archivo README en: [https://github.com/openai/whisper](https://github.com/openai/whisper).
+
+## Configuración de variables de entorno
+
+Hay que configurar dos variables de entorno:
+
+- **GITHUB_TOKEN:** token de tu cuenta de GitHub
+- **OPENAI_API_KEY:** API key de OpenAI
+
+En Windows, se puede hacer esto mediante las **Propiedades del sistema.**

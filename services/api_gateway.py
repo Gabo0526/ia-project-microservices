@@ -28,8 +28,8 @@ def process_audio():
     file = request.files["file"]
 
     # Verificar formato del archivo
-    if not (file.filename.endswith(".mp3") or file.filename.endswith(".m4a")):
-        return jsonify({"error": "Solo se aceptan archivos .mp3 o .m4a"}), 400
+    # if not (file.filename.endswith(".mp3") or file.filename.endswith(".m4a")):
+    #     return jsonify({"error": "Solo se aceptan archivos .mp3 o .m4a"}), 400
 
     try:
         # Paso 1: Enviar el archivo al servicio de transcripción

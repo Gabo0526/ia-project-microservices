@@ -73,7 +73,7 @@ def transcribe_audio():
         # Guardar la transcripción en un archivo de texto con el nombre único generado.
         output_filename = file_path.replace(
             os.path.splitext(file.filename)[1], "_transcription.txt")
-        with open(output_filename, "w") as f:
+        with open(output_filename, "w", encoding="utf-8") as f:
             f.write(transcription_text)
 
         # Eliminar el archivo de audio original después de procesarlo para liberar espacio.

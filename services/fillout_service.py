@@ -11,10 +11,13 @@ app = Flask(__name__)
 # Configuración de OpenAI
 # Obtener el token de autenticación desde una variable de entorno para proteger las credenciales.
 # os.getenv devuelve None si la variable no está definida.
+# Este es el token de GitHub para utilizar la API de OpenAI de forma gratuita, que está almacenado en una variable de entorno del sistema
 token = os.getenv("GITHUB_TOKEN")
 
-# Definir el endpoint de OpenAI y el modelo a usar
+# Definir el endpoint de OpenAI para utilizar la API de forma gratuita
 endpoint = "https://models.inference.ai.azure.com"
+
+# Definir el modelo a utilizar
 model_name = "gpt-4o"  # Modelo GPT-4 optimizado
 
 # Verificar si el token está configurado. Si no, lanzar un error para evitar problemas de ejecución.
@@ -23,8 +26,11 @@ if not token:
         "El token de OpenAI no está configurado en las variables de entorno"
     )
 
-# Crear un cliente de OpenAI utilizando el token y el endpoint configurados
-client = OpenAI(base_url=endpoint, api_key=token)
+# Crear un cliente de OpenAI
+# Utiliza la API privada de OpenAI almacenada en una variable de entorno del sistema:
+client = OpenAI()
+# Utiliza la API de forma gratuita:
+# client = OpenAI(base_url=endpoint, api_key=token)
 
 
 @app.route('/')
@@ -41,9 +47,9 @@ def process_text():
     # Obtener los datos JSON enviados en la solicitud POST.
     data = request.get_json()
 
-    # Validar que los datos contengan el campo 'conversation'.
+    # Validar que los datos contengan el campo 'transcription'.
     if not data or 'transcription' not in data:
-        return jsonify({"error": "Datos no válidos, se esperaba el campo 'conversation'"}), 400
+        return jsonify({"error": "Datos no válidos, se esperaba el campo 'transcription'"}), 400
 
     # Extraer el texto del diálogo de la solicitud.
     conversation = data['transcription']
@@ -52,17 +58,16 @@ def process_text():
     query = (
         "A continuación, se te proporcionará una serie de diálogos extraídos de consultas médicas. "
         "Tu tarea es procesar esta información para completar un registro médico con los siguientes especificaciones: "
-        "1. Campos a rellenar: - Nombre - Sexo (solo puede ser 'Masculino' o 'Femenino') - Edad - Motivo de la consulta "
-        "- Problema actual - Antecedentes personales - Antecedentes familiares - Vacunación - Diagnóstico - Observaciones - Tratamiento (Lo más detallado posible). "
+        "1. Campos a rellenar: - Nombre - Sexo (solo puede ser 'Masculino' o 'Femenino', y si dentro de la conversación no se menciona explicitamente, analiza por comentarios del paciente, es decir si habla de si mismo en femenino o masculino.) - Edad - Motivo de la consulta "
+        "- Problema actual - Antecedentes personales - Antecedentes familiares - Vacunación (Busca detalladamente si se mencionan aspectos sobre este campo) - Diagnóstico - Observaciones - Tratamiento (Lo más detallado posible). "
         "2. Reglas a seguir: "
         "- Si algún campo no tiene información explícita en el diálogo, completa con 'Desconocido'. "
-        "- El campo 'Sexo' solo puede ser 'Masculino' o 'Femenino'. "
-        "- Los campos 'Diagnóstico', 'Observaciones' y 'Tratamiento' deben completarse según tu análisis del diálogo y la información que puedas rescatar del mismo, y aunque no se mencionen textualmente. "
+        "- Los campos 'Diagnóstico', 'Observaciones' y 'Tratamiento' deben completarse según tu análisis del diálogo y la información que puedas rescatar del mismo, aunque no se mencionen explícitamente. "
         "3. Formato de respuesta: Responde SOLO con los valores de los campos, separados por punto y coma (;). "
         "4. Ejemplo de entrada (Diálogo): Paciente, Juan Pérez, refiere dolor abdominal después de comer, con antecedentes de gastritis... "
-        "Ejemplo de salida: Juan Pérez; Masculino; 45 años; Dolor abdominal postprandial; Gastritis; Sin antecedentes personales importantes; "
-        "Madre con úlcera gástrica; Vacunación al día; Gastritis crónica; Se sugiere endoscopía y evaluación adicional; Omeprazol 20 mg cada 12 horas por 2 semanas. "
-        "En caso de que no detectes un diálogo correspondiente a atención médica, simplemente responde a todos los campos con Desconocido y nada más. "
+        "Ejemplo de salida: Juan Pérez; Masculino; 45 años; Dolor abdominal postprandial...; Gastritis; Sin antecedentes personales importantes; "
+        "Madre con úlcera gástrica; Vacunación al día; Gastritis crónica...; Se sugiere endoscopía y evaluación adicional; Omeprazol 20 mg cada 12 horas por 2 semanas. "
+        "En caso de que no detectes un diálogo correspondiente a atención médica, simplemente responde a todos los campos con Desconocido y nada más: "
     )
 
     # Añadir el diálogo proporcionado por el usuario a la consulta.
@@ -78,7 +83,7 @@ def process_text():
             temperature=0.7,  # Controla la creatividad de la respuesta.
             # Muestra la probabilidad acumulativa para limitar el vocabulario generado.
             top_p=1.0,
-            max_tokens=1000,  # Límite de tokens en la respuesta.
+            max_tokens=3000,  # Límite de tokens en la respuesta.
             model=model_name
         )
 
